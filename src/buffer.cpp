@@ -41,7 +41,9 @@ BufMgr::~BufMgr() {
 
 void BufMgr::advanceClock()
 {
-
+	//increments the clockhand by 1 and make sure it is between 0 and numBufs -1
+	temp = (clockHand +1)
+	clockHand = temp % numBufs;//clockHand should not be greater than numBufs-1
 }
 
 void BufMgr::allocBuf(FrameId & frame) 
@@ -51,6 +53,23 @@ void BufMgr::allocBuf(FrameId & frame)
 	
 void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 {
+	FrameId frame_number;
+	try{
+		hashTable->lookup(file, pageNo, frame_number);
+		page = &bufPool[frame_number];
+		//Increment pin count and set reference bit to 1
+		bufDescTable[frame_number].pinCnt++;
+    	bufDescTable[frame_number].refbit = 1;
+	}catch(const std::HashNotFoundException& e){
+		// lookup trows HashNotFoundException since the page is not found in 
+		//in the buffer pool
+		allocBuf(frame_number);//allocate a buffer frame
+    	Page page_red = file->readPage(pageNo);//read page from disk to mem
+    	bufPool[frame_number] = page_red;
+    	page = &bufPool[frame_number];
+    	hashTable->insert(file, pageNo, frame_number);// insert the page in the hashtable
+    	bufDescTable[frame_number].Set(file, pageNo);
+	}
 }
 
 
