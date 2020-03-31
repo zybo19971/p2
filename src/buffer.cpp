@@ -75,6 +75,19 @@ void BufMgr::readPage(File* file, const PageId pageNo, Page*& page)
 
 void BufMgr::unPinPage(File* file, const PageId pageNo, const bool dirty) 
 {
+	FrameId frame_number;
+	try{//try to find the page
+		hashTable->lookup(file, pageNo, frame_number);
+		int pin_count = bufDescTable[frame_number].pinCnt;
+		//Throws PAGENOTPINNED if the pin count is already 0
+		if (pin_count == 0) throw PageNotPinnedException(file->filename(), pageNo, frameNo);
+		//if dirty == true, sets the dirty bit
+  		if (dirty == true) bufDescTable[frame_number].dirty = dirty;
+		//Decrements the pinCnt of the frame containing (file, PageNo)
+		bufDescTable[frame_number].pinCnt-=1;
+	}catch(const std::HashNotFoundException& e){
+		//Does nothing if page is not found in the Hashtable lookup
+	}
 }
 
 void BufMgr::flushFile(const File* file) 
