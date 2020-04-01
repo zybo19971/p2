@@ -2,7 +2,7 @@
  * Program Title: Buffer Manager
  * File Purpose:
  * Authors & ID: AKOVI BERLOS MENSAH
- *               Yuanbo Zhang
+ *               Yuanbo Zhang 9080344840
  *               Quming Wang(9079581147);
  * 
  */
@@ -49,7 +49,7 @@ BufMgr::~BufMgr()
 void BufMgr::advanceClock()
 {
 	//increments the clockhand by 1 and make sure it is between 0 and numBufs -1
-	temp = (clockHand + 1);
+	int temp = (clockHand + 1);
 	clockHand = temp % numBufs; //clockHand should not be greater than numBufs-1
 }
 
@@ -87,8 +87,7 @@ void BufMgr::allocBuf(FrameId &frame)
 	} else {
 	  if(frameInfo->dirty){
 	    // flush page to disk
-	    Status s = frameInfo->file->writePage(frameInfo->pageNo, bufPool + frameInfo->frameNo);
-	    CHKSTAT(s); // UNIXERR
+	    frameInfo->file->writePage(frameInfo->pageNo, bufPool + frameInfo->frameNo);
 	  }
 	  break;
 	}
@@ -196,12 +195,10 @@ void BufMgr::flushFile(const File *file)
     BufDesc* pFrame = frames[i];
     if(pFrame->dirty){
       // flush to disk
-      Status s = pFile->writePage(pFrame->pageNo, bufPool + pFrame->frameNo);
-      CHKSTAT(s);
+      pFile->writePage(pFrame->pageNo, bufPool + pFrame->frameNo);
       pFrame->dirty = false;
     }
-    Status s = hashTable->remove(pFile, pFrame->pageNo);
-    CHKSTAT(s);
+    hashTable->remove(pFile, pFrame->pageNo);
     pFrame->Clear();
   }
   throw BadBufferException();
