@@ -1,8 +1,10 @@
 /**
- * @author See Contributors.txt for code contributors and overview of BadgerDB.
- *
- * @section LICENSE
- * Copyright (c) 2012 Database Group, Computer Sciences Department, University of Wisconsin-Madison.
+ * Program Title: Buffer Manager
+ * File Purpose:
+ * Authors & ID: AKOVI BERLOS MENSAH
+ *               Yuanbo Zhang
+ *               Quming Wang(9079581147);
+ * 
  */
 
 #include <memory>
@@ -15,6 +17,13 @@
 
 namespace badgerdb {
 
+/**
+* returns hash value between 0 and HTSIZE-1 computed using file and pageNo
+*
+* @param file   	File object
+* @param pageNo  Page number in the file
+* @return  			Hash value.
+*/
 int BufHashTbl::hash(const File* file, const PageId pageNo)
 {
   int tmp, value;
@@ -45,6 +54,15 @@ BufHashTbl::~BufHashTbl()
   delete [] ht;
 }
 
+/**
+* Insert entry into hash table mapping (file, pageNo) to frameNo.
+*
+* @param file   	File object
+* @param pageNo 	Page number in the file
+* @param frameNo Frame number assigned to that page of the file
+* @throws  HashAlreadyPresentException	if the corresponding page already exists in the hash table
+* @throws  HashTableException (optional) if could not create a new bucket as running of memory
+*/
 void BufHashTbl::insert(const File* file, const PageId pageNo, const FrameId frameNo)
 {
   int index = hash(file, pageNo);
@@ -67,6 +85,15 @@ void BufHashTbl::insert(const File* file, const PageId pageNo, const FrameId fra
   ht[index] = tmpBuc;
 }
 
+/**
+* Check if (file, pageNo) is currently in the buffer pool (ie. in
+* the hash table).
+*
+* @param file  	File object
+* @param pageNo	Page number in the file
+* @param frameNo Frame number reference
+* @throws HashNotFoundException if the page entry is not found in the hash table 
+*/
 void BufHashTbl::lookup(const File* file, const PageId pageNo, FrameId &frameNo) 
 {
   int index = hash(file, pageNo);
@@ -83,6 +110,13 @@ void BufHashTbl::lookup(const File* file, const PageId pageNo, FrameId &frameNo)
   throw HashNotFoundException(file->filename(), pageNo);
 }
 
+/**
+* Delete entry (file,pageNo) from hash table.
+*
+* @param file   	File object
+* @param pageNo  Page number in the file
+* @throws HashNotFoundException if the page entry is not found in the hash table 
+*/
 void BufHashTbl::remove(const File* file, const PageId pageNo) {
 
   int index = hash(file, pageNo);
@@ -107,7 +141,6 @@ void BufHashTbl::remove(const File* file, const PageId pageNo) {
       tmpBuc = tmpBuc->next;
     }
   }
-
   throw HashNotFoundException(file->filename(), pageNo);
 }
 
