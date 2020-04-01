@@ -38,9 +38,22 @@ BufMgr::BufMgr(std::uint32_t bufs)
 	clockHand = bufs - 1;
 }
 
+/**
+* Flushes out all dirty pages and deallocates the buffer pool and the BufDesc table.
+*/
 BufMgr::~BufMgr()
 {
+    // Flushes out all dirty pages
+    for(int i = 0; i < numBufs; i++){
+        BufDesc* frame = &bufDescTable[i];
+        if(frame->dirty){
+          // flush to disk
+          frame->file->writePage(*(bufPool + frame->frameNo));
+        }
+    }
+    // Deallocate
 	delete[] bufPool;
+    delete[] bufDescTable;
 }
 
 /**
