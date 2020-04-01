@@ -183,21 +183,24 @@ void BufMgr::unPinPage(File *file, const PageId pageNo, const bool dirty)
 void BufMgr::flushFile(const File *file)
 {
 	 // first check if all pages of this file are unpinned
+      File* pFile = const_cast<File*>(file);
   for(int i = 0; i < numBufs; i++){
     BufDesc* frame = &bufDescTable[i];
-    if(frame->file == file){
+    if(frame->file == pFile){
+      if(frame->pinCnt > 0)
+        throw PagePinnedException(frame->file->filename(), frame->pageNo, frame->frameNo);
+      if(!frame->valid)
+          throw BadBufferException(frame->frameNo, frame->dirty, frame->valid, frame->refbit);
       if(frame->dirty){
         // flush to disk
-        file->writePage(*(bufPool + frame->frameNo));
+        frame->file->writePage(*(bufPool + frame->frameNo));
         frame->dirty = false;
       }
       hashTable->remove(file, frame->pageNo);
       frame->Clear();
     }
-    if(frame->pinCnt > 0) 
-	throw PagePinnedException();
   }
-  throw BadBufferException();
+  
 }
 
 /**
