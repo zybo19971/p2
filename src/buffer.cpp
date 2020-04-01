@@ -96,11 +96,28 @@ void BufMgr::flushFile(const File* file)
 
 void BufMgr::allocPage(File* file, PageId &pageNo, Page*& page) 
 {
+	FrameId frame_number;
+	Page p = file->allocatePage();//store the newly allocated page in p
+  	allocBuf(frame_number); //obtain a buffer pool frame
+  	bufPool[frame_number] = p;
+	//returns both the page number of the newly allocated page
+  	page = &bufPool[frame_number];
+  	pageNo = page->page_number();
+  	hashTable->insert(file, pageNo, frame_number);//insert entry in the Hashtable
+  	bufDescTable[frame_number].Set(file, pageNo);
 }
 
 void BufMgr::disposePage(File* file, const PageId PageNo)
 {
-    
+	FrameId frame_number;
+	try{//makes sure that if the page to be deleted is allocated a frame in the buffer pool, that frame
+        //is freed and correspondingly entry from hash table is also removed
+		hashTable->lookup(file, pageNo, frame_number);
+		hashTable->remove(bufDescTable[frameNo].file, bufDescTable[frameNo].pageNo);
+    	bufDescTable[frameNo].Clear();	
+	}catch(const std::HashNotFoundException& e){	
+	}
+  	file->deletePage(PageNo); //delete the page from the file
 }
 
 void BufMgr::printSelf(void) 
